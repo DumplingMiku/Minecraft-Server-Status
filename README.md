@@ -2,8 +2,6 @@
 
 A modern, secure, and lightweight dashboard to monitor your Minecraft servers (Java & Bedrock). Built with React, Vite, and Tailwind CSS.
 
-![Project Preview](https://via.placeholder.com/800x400?text=Preview+Coming+Soon)
-
 ## ✨ Features
 
 - **Live Status**: Real-time monitoring of online/offline status, player count, and version.
