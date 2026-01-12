@@ -1,0 +1,23 @@
+{
+  "app": {
+    "title": "Minecraft Server Status",
+    "description": "Monitor your favorite Minecraft servers in real-time.",
+    "metaTitle": "Server Status",
+    "favicon": "https://media.forgecdn.net/avatars/thumbnails/44/924/64/64/635832626620571649.png",
+    "logo": "https://media.forgecdn.net/avatars/thumbnails/44/924/64/64/635832626620571649.png"
+  },
+  "servers": [
+    {
+      "id": "example-1",
+      "name": "My Survival Server",
+      "ip": "play.example.com",
+      "hideIp": false
+    },
+    {
+      "id": "example-2",
+      "name": "Secret Server",
+      "ip": "127.0.0.1",
+      "hideIp": true
+    }
+  ]
+}
