@@ -1,7 +1,7 @@
 export interface MinecraftServer {
   id: string;
   name: string;
-  ip: string;
+  ip?: string; // Optional because it is stripped in the frontend build
   hideIp: boolean;
 }
 

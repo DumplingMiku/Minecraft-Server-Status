@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/status/:id",
+      "destination": "/api/status?id=:id"
+    }
+  ]
+}

@@ -3,10 +3,10 @@ import { Trash2, RefreshCw, Copy, AlertTriangle, Clock } from 'lucide-react';
 import type { MinecraftServer, ServerStatus } from '../types';
 import clsx from 'clsx';
 import DOMPurify from 'dompurify';
-import { revealIp } from '../utils/security';
 
+// The frontend config now omits 'ip', so we make it partial/optional here
 interface ServerCardProps {
-  server: MinecraftServer;
+  server: Omit<MinecraftServer, 'ip'> & { ip?: string }; 
   onDelete: (id: string) => void;
 }
 
@@ -16,14 +16,27 @@ export function ServerCard({ server, onDelete }: ServerCardProps) {
   const [error, setError] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
 
-  // Decrypt IP once
-  const realIp = revealIp(server.ip);
+  // Use configured API URL (e.g. Cloudflare Worker) or default to relative path (Node.js backend)
+  const API_BASE = import.meta.env.VITE_API_URL || '/api/status';
 
   const fetchStatus = async () => {
     setLoading(true);
     setError(false);
     try {
-      const res = await fetch(`https://api.mcsrvstat.us/2/${realIp}`);
+      // PROXY MODE: Request by ID, let the backend handle the IP lookup
+      const res = await fetch(`${API_BASE}/${server.id}`);
+      
+      if (!res.ok) {
+        // Attempt to read the error message from the backend (Cloudflare Worker)
+        try {
+            const errData = await res.json();
+            console.error(`[ServerCard] Backend Error for ${server.name}:`, errData);
+        } catch (jsonError) {
+            console.error(`[ServerCard] Backend Error for ${server.name}: ${res.status} ${res.statusText}`);
+        }
+        throw new Error(`API Error: ${res.status}`);
+      }
+
       const data = await res.json();
       
       if (data.online) {
@@ -68,10 +81,15 @@ export function ServerCard({ server, onDelete }: ServerCardProps) {
     fetchStatus();
     const interval = setInterval(fetchStatus, 60000); // Auto refresh every minute
     return () => clearInterval(interval);
-  }, [server.ip]);
+  }, [server.id]); // Dependency changed from ip to id
 
   const copyIp = () => {
-    navigator.clipboard.writeText(realIp);
+    // In proxy mode, we might not have the real IP in the frontend. 
+    // If the backend returns it (e.g. in hostname), we could use that, 
+    // otherwise disable copy if strictly hidden.
+    if (status?.hostname) {
+        navigator.clipboard.writeText(status.hostname);
+    }
   };
 
   return (
@@ -118,9 +136,9 @@ export function ServerCard({ server, onDelete }: ServerCardProps) {
              <div className="flex items-center gap-2 bg-zinc-950/50 px-2 py-1 rounded-md border border-zinc-800/50 group w-fit max-w-full">
                 <span className="text-xs font-mono text-zinc-500 select-none hidden sm:inline">IP</span>
                 <code className="text-sm text-zinc-300 truncate font-mono">
-                    {server.hideIp ? "HIDDEN IP ADDRESS" : realIp}
+                    {server.hideIp ? "HIDDEN IP ADDRESS" : (status?.hostname || "Connecting...")}
                 </code>
-                 {!server.hideIp && (
+                 {!server.hideIp && status?.hostname && (
                     <div className="flex items-center gap-1 pl-2 border-l border-zinc-800">
                         <button onClick={copyIp} className="hover:text-white text-zinc-500 transition-colors" title="Copy IP">
                             <Copy size={12} />

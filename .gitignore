@@ -19,3 +19,4 @@ dist-ssr
 .env
 servers.json
 src/serverConfig.ts
+GEMINI.md

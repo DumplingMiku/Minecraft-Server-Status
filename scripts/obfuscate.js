@@ -35,32 +35,25 @@ const obfuscate = () => {
         };
     }
 
-    const obfuscatedServers = config.servers.map(s => {
-      // 1. 先做 XOR 加密
-      const xorText = xorEncrypt(s.ip, SECRET_KEY);
-      // 2. 再轉成 Base64
-      const base64Text = Buffer.from(xorText, 'binary').toString('base64');
-      
-      return {
-        ...s,
-        ip: base64Text
-      };
-    });
+    // SANITIZE: We strictly remove the 'ip' field for the frontend build.
+    // The frontend will now query /api/status/:id instead of the IP directly.
+    const sanitizedServers = config.servers.map(({ ip, ...rest }) => rest);
 
     const content = `// ------------------------------------------------------------------
 // 這個檔案是自動產生的，請勿手動修改。
-// 請修改根目錄的 servers.json 並確保 .env 中的 VITE_IP_KEY 設定正確。
+// 為了安全起見，此檔案僅包含伺服器 ID，不包含真實 IP。
 // ------------------------------------------------------------------
 
 import type { MinecraftServer } from './types';
 
 export const APP_CONFIG = ${JSON.stringify(config.app, null, 2)};
 
-export const SERVER_CONFIG: MinecraftServer[] = ${JSON.stringify(obfuscatedServers, null, 2)};
+// IP field is intentionally removed to prevent leaks.
+export const SERVER_CONFIG: Omit<MinecraftServer, 'ip'>[] = ${JSON.stringify(sanitizedServers, null, 2)};
 `;
 
     fs.writeFileSync(outputPath, content);
-    console.log(`✅ 已使用密鑰 '${SECRET_KEY}' 成功加密 IP`);
+    console.log(`✅ 已生成前端設定 (IP 已隱藏)`);
   } catch (error) {
     console.error('❌ 加密失敗:', error.message);
   }

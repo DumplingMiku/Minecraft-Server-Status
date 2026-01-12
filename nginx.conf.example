@@ -1,0 +1,31 @@
+# Example Nginx Configuration for mc-status-panel
+# This configuration assumes you are running the Node.js server on port 3000 (PM2 or Docker).
+
+server {
+    listen 80;
+    server_name status.yourdomain.com;
+
+    # 1. Forward API requests to the Node.js Backend
+    # This hides the real IP from the client by making the backend do the fetch.
+    location /api/ {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
+
+    # 2. Serve Static Files (Option A: Let Nginx serve 'dist' directly for speed)
+    location / {
+        root /var/www/mc-status-panel/dist;
+        index index.html;
+        try_files $uri $uri/ /index.html;
+    }
+
+    # OR Option B: Forward EVERYTHING to Node.js (Simpler setup)
+    # location / {
+    #    proxy_pass http://localhost:3000;
+    #    ...
+    # }
+}
