@@ -38,7 +38,11 @@ export default async (req, context) => {
   }
 
   try {
-    const apiRes = await fetch(`https://api.mcsrvstat.us/2/${server.ip}`);
+    const apiRes = await fetch(`https://api.mcsrvstat.us/2/${server.ip}`, {
+      headers: {
+        'User-Agent': 'MC-Status-Panel-Netlify/1.0'
+      }
+    });
     const data = await apiRes.json();
     return new Response(JSON.stringify(data), { status: 200, headers });
   } catch (e) {

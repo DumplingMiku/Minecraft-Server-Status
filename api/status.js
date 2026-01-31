@@ -33,7 +33,11 @@ export default async function handler(req, res) {
   }
 
   try {
-    const response = await fetch(`https://api.mcsrvstat.us/2/${server.ip}`);
+    const response = await fetch(`https://api.mcsrvstat.us/2/${server.ip}`, {
+      headers: {
+        'User-Agent': 'MC-Status-Panel-Vercel/1.0'
+      }
+    });
     const data = await response.json();
     res.status(200).json(data);
   } catch (error) {

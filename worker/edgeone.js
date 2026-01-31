@@ -53,7 +53,11 @@ async function handleRequest(request) {
   }
 
   try {
-    const response = await fetch(`https://api.mcsrvstat.us/2/${server.ip}`);
+    const response = await fetch(`https://api.mcsrvstat.us/2/${server.ip}`, {
+      headers: {
+        'User-Agent': 'MC-Status-Panel-EdgeOne/1.0'
+      }
+    });
     const data = await response.json();
     
     return new Response(JSON.stringify(data), {

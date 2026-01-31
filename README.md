@@ -39,6 +39,9 @@ A modern, secure, and lightweight dashboard to monitor your Minecraft servers (J
 
 To hide your server IPs, you MUST deploy a backend proxy. This project supports multiple platforms out-of-the-box.
 
+**Note:** Currently, only Cloudflare Worker and Node.js (Option D) have been thoroughly tested. Other options (Vercel, Netlify, EdgeOne) are provided for convenience but may require further testing.
+
+
 ### Option A: Cloudflare Worker / Tencent EdgeOne
 1. **Cloudflare:** Copy `worker/index.js` to a new Worker.
 2. **EdgeOne:** Copy `worker/edgeone.js` to a new Edge Function.
@@ -57,11 +60,14 @@ To hide your server IPs, you MUST deploy a backend proxy. This project supports 
 3. Netlify will automatically detect and deploy the functions.
 4. No extra API URL config needed (defaults to relative path).
 
-### Option D: Node.js / VPS
-1. Run `npm run build`.
-2. Ensure `servers.json` and the `dist/` folder are in the same directory as `server.js`.
-3. Run `node server.js` (or use PM2).
-4. Configure Nginx to proxy `/api/` to `localhost:3000` (see `nginx.conf.example`).
+### Option D: Node.js / VPS (Self-Hosted)
+The included `server.js` can serve both the frontend and the API simultaneously. For this setup, ensure you leave `VITE_API_URL` empty in your `.env` file.
+
+1.  Build the frontend: `npm run build`.
+2.  Place the generated `dist/` folder, `servers.json`, and `server.js` in the same directory on your server.
+3.  Run the server: `node server.js`. It will host your panel on `http://localhost:3000`.
+
+For production, it is recommended to place this behind a reverse proxy like Nginx to handle SSL and domain routing (see `nginx.conf.example` for a basic setup).
 
 ## ⚙️ Configuration (`servers.json`)
 
@@ -90,10 +96,19 @@ To hide your server IPs, you MUST deploy a backend proxy. This project supports 
 ## 🛠️ Development & Build
 
 ### Development Mode
-Runs the local dev server. You should also run `node server.js` in another terminal for API functionality.
+This runs the Vite frontend dev server. For API calls to work, you must also run the Node.js backend in a separate terminal. The Vite configuration is pre-set to proxy API requests to the Node server.
+
+**1. Start the Backend Server:**
+```bash
+node server.js
+```
+
+**2. In a new terminal, start the Frontend Dev Server:**
 ```bash
 npm run dev
 ```
+
+For this local setup, leave the `VITE_API_URL` in your `.env` file empty.
 
 ### Production Build
 Strips IPs from the configuration and builds the static site to `dist/`.
@@ -109,15 +124,6 @@ npm run build
 4. **Zero-Leak**: The client's Network tab only sees your Proxy URL, never the real server IP.
 
 ## ❓ Troubleshooting
-
-### Cloudflare Worker Error 500 / Upstream 403 Forbidden
-If your Worker logs show `Upstream API error: 403 Forbidden`:
-1. The upstream API (`mcsrvstat.us`) requires a `User-Agent` header.
-2. Ensure your `worker/index.js` includes the following in the fetch options:
-   ```javascript
-   headers: { "User-Agent": "MC-Status-Panel-Worker/1.0" }
-   ```
-3. Update your deployed Worker code.
 
 ### ID Not Found
 If you get "Server config not found for ID":

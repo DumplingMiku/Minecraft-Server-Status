@@ -39,6 +39,9 @@
 
 為了徹底隱藏伺服器 IP，您**必須**部署一個後端中繼站。本專案已針對主流平台提供開箱即用的支援。
 
+**注意：** 目前僅有 Cloudflare Worker 和 Node.js (方案 D) 經過完整測試。其他方案 (Vercel, Netlify, EdgeOne) 僅為提供便利性，可能需要進一步測試。
+
+
 ### 方案 A：Cloudflare Worker / 騰訊雲 EdgeOne
 1. **Cloudflare:** 將 `worker/index.js` 的內容複製到新的 Worker。
 2. **EdgeOne:** 將 `worker/edgeone.js` 的內容複製到新的邊緣函數。
@@ -56,10 +59,13 @@
 3. 同樣支援開箱即用，無需手動設定 API 網址。
 
 ### 方案 D：Node.js / VPS (自託管)
-1. 執行 `npm run build`。
-2. 確保 `servers.json` 與 `dist/` 資料夾與 `server.js` 放在伺服器上的同一個目錄。
-3. 執行 `node server.js` (建議搭配 PM2)。
-4. 設定 Nginx 將 `/api/` 導向 `localhost:3000` (參考 `nginx.conf.example`)。
+專案內附的 `server.js` 可以同時提供前端頁面與後端 API 服務。使用此方案時，請確保 `.env` 檔案中的 `VITE_API_URL` 為空。
+
+1.  編譯前端專案：`npm run build`。
+2.  將編譯好的 `dist/` 資料夾、`servers.json` 與 `server.js` 放置在您伺服器的同一個目錄下。
+3.  啟動伺服器：`node server.js`。您的監控面板將會運行在 `http://localhost:3000`。
+
+在生產環境中，建議使用 Nginx 等反向代理工具將其部署在域名後方，以便處理 SSL 憑證等（可參考 `nginx.conf.example` 進行基礎設定）。
 
 ## ⚙️ 設定指南 (`servers.json`)
 
@@ -88,10 +94,19 @@
 ## 🛠️ 開發與編譯
 
 ### 開發模式 (Development)
-啟動本地開發伺服器。建議同時在另一個終端機執行 `node server.js` 以供 API 呼叫。
+此指令會啟動 Vite 前端開發伺服器。為了讓 API 能正常請求，您必須在另一個終端機視窗中啟動 Node.js 後端。Vite 已預先設定好會將 API 請求代理至 Node.js 伺服器。
+
+**1. 啟動後端伺服器：**
+```bash
+node server.js
+```
+
+**2. 在新的終端機視窗中，啟動前端開發伺服器：**
 ```bash
 npm run dev
 ```
+
+在此本地開發模式下，請將 `.env` 檔案中的 `VITE_API_URL` 留空。
 
 ### 生產構建 (Production Build)
 剔除前端設定檔中的 IP 並將網站編譯至 `dist/` 資料夾。
@@ -109,15 +124,6 @@ npm run build
 4. **零洩漏 (Zero-Leak)**: 瀏覽器的網路面板只會看到您的代理網址，永遠不會出現真實的伺服器 IP。
 
 ## ❓ 常見問題排查
-
-### Cloudflare Worker 回傳 500 / Upstream 403 Forbidden
-若您在 Worker 日誌中看到 `Upstream API error: 403 Forbidden`：
-1. 上游 API (mcsrvstat.us) 要求請求必須包含 `User-Agent` 標頭。
-2. 請確保您的 `worker/index.js` 程式碼在 `fetch` 時有加入以下標頭：
-   ```javascript
-   headers: { "User-Agent": "MC-Status-Panel-Worker/1.0" }
-   ```
-3. 請更新您在 Cloudflare 上部署的程式碼。
 
 ### 找不到伺服器 ID (Server config not found)
 1. 請確保您已將 `servers.json` 的內容完整複製到 `worker/index.js` 內的 `CONFIG` 變數中。

@@ -40,7 +40,11 @@ app.get('/api/status/:id', async (req, res) => {
     }
 
     try {
-        const apiRes = await fetch(`https://api.mcsrvstat.us/2/${server.ip}`);
+        const apiRes = await fetch(`https://api.mcsrvstat.us/2/${server.ip}`, {
+            headers: {
+                'User-Agent': 'MC-Status-Panel-Node/1.0'
+            }
+        });
         const data = await apiRes.json();
         res.json(data);
     } catch (e) {
@@ -50,12 +54,11 @@ app.get('/api/status/:id', async (req, res) => {
 });
 
 // Serve Static Frontend (Production)
-// Assumes 'dist' folder is in the same directory or root
 const distPath = path.join(__dirname, 'dist');
 if (fs.existsSync(distPath)) {
     app.use(express.static(distPath));
-    // SPA Fallback
-    app.get('*', (req, res) => {
+    // SPA Fallback - use middleware instead of route
+    app.use((req, res) => {
         res.sendFile(path.join(distPath, 'index.html'));
     });
 } else {
